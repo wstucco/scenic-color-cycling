@@ -27,8 +27,6 @@ foo-*.tar
 *.secret.exs
 *.secrets.exs
 
-/priv/static/images/*
-!/priv/static/images/sotb
 
 /.elixir_ls/
 

@@ -1,0 +1,97 @@
+[{
+    "mode": 0,
+    "rate": 0,
+    "low": 128,
+    "high": 146
+  },
+  {
+    "mode": 0,
+    "rate": 0,
+    "low": 7,
+    "high": 13
+  },
+  {
+    "mode": 0,
+    "rate": 0,
+    "low": 13,
+    "high": 17
+  },
+  {
+    "mode": 0,
+    "rate": 1227,
+    "low": 32,
+    "high": 47
+  },
+  {
+    "mode": 0,
+    "rate": 1689,
+    "low": 48,
+    "high": 63
+  },
+  {
+    "mode": 0,
+    "rate": 1689,
+    "low": 64,
+    "high": 79
+  },
+  {
+    "mode": 0,
+    "rate": 1227,
+    "low": 80,
+    "high": 95
+  },
+  {
+    "mode": 0,
+    "rate": 921,
+    "low": 96,
+    "high": 103
+  },
+  {
+    "mode": 0,
+    "rate": 1689,
+    "low": 128,
+    "high": 143
+  },
+  {
+    "mode": 0,
+    "rate": 1536,
+    "low": 22,
+    "high": 31
+  },
+  {
+    "mode": 0,
+    "rate": 1536,
+    "low": 160,
+    "high": 175
+  },
+  {
+    "mode": 0,
+    "rate": 1536,
+    "low": 176,
+    "high": 191
+  },
+  {
+    "mode": 0,
+    "rate": 0,
+    "low": 0,
+    "high": 0
+  },
+  {
+    "mode": 0,
+    "rate": 0,
+    "low": 0,
+    "high": 0
+  },
+  {
+    "mode": 0,
+    "rate": 0,
+    "low": 0,
+    "high": 0
+  },
+  {
+    "mode": 0,
+    "rate": 0,
+    "low": 246,
+    "high": 247
+  }
+]
