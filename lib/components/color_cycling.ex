@@ -27,15 +27,13 @@ defmodule ColorCycling.Component.ColorCycling do
     graph =
       Graph.build()
       |> group(
-        fn
-          g ->
-            g
-            |> rect(
-              {width, height},
-              fill: {:image, "hash"},
-              translate: {0, 0},
-              id: :image
-            )
+        fn g ->
+          g
+          |> rect(
+            {width, height},
+            translate: {0, 0},
+            id: :image
+          )
         end,
         []
       )
@@ -48,7 +46,7 @@ defmodule ColorCycling.Component.ColorCycling do
     {:ok,
      %{
        graph: graph,
-       hash: nil,
+       hashes: [],
        cycles: [],
        color_blending:
          Application.get_application(__MODULE__)
@@ -56,10 +54,7 @@ defmodule ColorCycling.Component.ColorCycling do
      }}
   end
 
-  def animation_frame(
-        %{frame: frame},
-        %{png: png, cycles: cycles} = state
-      )
+  def animation_frame(%{frame: frame}, %{png: png, cycles: cycles} = state)
       when rem(frame, @frames) == 0 do
     palette =
       png.palette
@@ -74,9 +69,9 @@ defmodule ColorCycling.Component.ColorCycling do
 
   def animation_frame(
         %{frame: frame},
-        %{png: png, cycles: cycles, color_blending: blend} = state
+        %{png: png, cycles: cycles, color_blending: blend?} = state
       )
-      when blend == true do
+      when blend? == true do
     p = rem(frame, @frames) / @frames
 
     palette =
@@ -87,6 +82,7 @@ defmodule ColorCycling.Component.ColorCycling do
     state =
       state
       |> replace_image_and_palette(png, palette)
+      # put the original png back into state to keep the original state
       |> Map.put(:png, png)
 
     {:noreply, state}
@@ -95,29 +91,37 @@ defmodule ColorCycling.Component.ColorCycling do
   def animation_frame(_sc_state, state), do: {:noreply, state}
 
   def filter_event({:value_changed, :nav, id}, _, state) do
-    state[:hash]
-    |> Scenic.Cache.release()
+    state
+    |> release_cache()
 
-    {:ok, hash} = load_assets(Asset.image("#{String.downcase(id)}.png"))
+    {:ok, hash} =
+      ~s/#{String.downcase(id)}.png/
+      |> Asset.image()
+      |> load_assets()
 
     {:ok, cycles} =
-      File.read!(Asset.image("#{String.downcase(id)}.json"))
+      ~s/#{String.downcase(id)}.json/
+      |> Asset.image()
+      |> File.read!()
       |> Jason.decode(keys: :atoms)
 
-    png = PNG.parse(Scenic.Cache.get!(hash))
+    png =
+      hash
+      |> Scenic.Cache.get!()
+      |> PNG.parse()
 
     state =
       state
       |> replace_image_and_palette(png, png.palette)
 
-    {:stop, %{state | png: png, cycles: cycles, hash: hash}}
+    {:stop, %{state | png: png, cycles: cycles, hashes: [hash]}}
   end
 
-  def filter_event({:value_changed, :color_blending, blend}, _, state) do
+  def filter_event({:value_changed, :color_blending, blend?}, _, state) do
     Application.get_application(__MODULE__)
-    |> Application.put_env(:color_blending, blend)
+    |> Application.put_env(:color_blending, blend?)
 
-    {:stop, %{state | color_blending: blend}}
+    {:stop, %{state | color_blending: blend?}}
   end
 
   def filter_event(:palette_request, from, state) do
@@ -127,11 +131,6 @@ defmodule ColorCycling.Component.ColorCycling do
 
   def filter_event(msg, _from, state), do: {:continue, msg, state}
 
-  def handle_info({:release_cache, hash}, state) do
-    Scenic.Cache.release(hash)
-    {:noreply, state}
-  end
-
   defp replace_image_and_palette(state, png, palette) do
     png = PNG.replace_palette(png, palette)
 
@@ -139,16 +138,10 @@ defmodule ColorCycling.Component.ColorCycling do
       state.graph
       |> update_image(png)
 
-    if hash != state.hash do
-      # delay releasing the image blob in cache by 50ms
-      # it could be faster than scenic drawing the new one
-      Process.send_after(self(), {:release_cache, state.hash}, 20)
-    end
-
     state
     |> Map.put(:graph, graph)
-    |> Map.put(:hash, hash)
     |> Map.put(:png, png)
+    |> Map.put(:hashes, [hash | state.hashes])
   end
 
   defp update_image(graph, png) do
@@ -168,5 +161,10 @@ defmodule ColorCycling.Component.ColorCycling do
       |> push_graph()
 
     {graph, hash}
+  end
+
+  defp release_cache(%{hashes: hashes}) do
+    hashes
+    |> Enum.each(&Scenic.Cache.release(&1, delay: 25))
   end
 end
