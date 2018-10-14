@@ -120,9 +120,12 @@ defmodule ColorCycling.Component.ColorCycling do
     {:stop, %{state | color_blending: blend}}
   end
 
-  def filter_event(msg, _from, state) do
-    {:continue, msg, state}
+  def filter_event(:palette_request, from, state) do
+    Palette.set_palette(from, state.png.palette)
+    {:stop, state}
   end
+
+  def filter_event(msg, _from, state), do: {:continue, msg, state}
 
   def handle_info({:release_cache, hash}, state) do
     Scenic.Cache.release(hash)
@@ -134,7 +137,6 @@ defmodule ColorCycling.Component.ColorCycling do
 
     {graph, hash} =
       state.graph
-      |> update_palette(palette)
       |> update_image(png)
 
     if hash != state.hash do
@@ -147,11 +149,6 @@ defmodule ColorCycling.Component.ColorCycling do
     |> Map.put(:graph, graph)
     |> Map.put(:hash, hash)
     |> Map.put(:png, png)
-  end
-
-  defp update_palette(graph, palette) do
-    Palette.set_palette(palette)
-    graph
   end
 
   defp update_image(graph, png) do

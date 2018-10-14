@@ -10,8 +10,6 @@ defmodule ColorCycling.Component.ColorCycling.Palette do
   def verify(_), do: :invalid_data
 
   def init(data, opts, _parent) do
-    Process.register(self(), __MODULE__)
-
     graph =
       Graph.build()
       |> group(&add_palette(&1, data), opts)
@@ -20,8 +18,8 @@ defmodule ColorCycling.Component.ColorCycling.Palette do
     {:ok, %{graph: graph, palette: data, new_palette: data}}
   end
 
-  def set_palette(palette) when is_list(palette) do
-    GenServer.cast(__MODULE__, {:set_palette, palette})
+  def set_palette(pid, palette) when is_list(palette) do
+    GenServer.cast(pid, {:set_palette, palette})
   end
 
   def handle_cast({:set_palette, palette}, state) do
@@ -30,6 +28,8 @@ defmodule ColorCycling.Component.ColorCycling.Palette do
 
   def animation_frame(_sc_state, %{graph: graph, palette: old, new_palette: new} = state)
       when old != new do
+    send_event(:palette_request)
+
     palette =
       new
       |> Enum.with_index()
@@ -45,11 +45,14 @@ defmodule ColorCycling.Component.ColorCycling.Palette do
     {:noreply, %{state | graph: graph, palette: palette}}
   end
 
-  def animation_frame(_sc_state, state), do: {:noreply, state}
+  def animation_frame(_sc_state, state) do
+    send_event(:palette_request)
+    {:noreply, state}
+  end
 
   defp add_palette(group, data) do
     group
-    # |> background()
+    |> background()
     |> grid()
     |> palette(data |> Enum.with_index())
   end
@@ -104,7 +107,7 @@ defmodule ColorCycling.Component.ColorCycling.Palette do
 
     {_, len} = Enum.max_by(data, fn {_, i} -> i end)
 
-    if len < 256 do
+    if len < 255 do
       len..255
       |> Enum.reduce(group, fn i, group ->
         group
