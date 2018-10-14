@@ -73,13 +73,17 @@ defmodule ColorCycling.Component.ColorCycling do
       # put the original png back into state to keep the original state
       |> Map.put(:png, png)
 
-    {:noreply, state}
+    state.hashes
+    |> Enum.drop(1)
+    |> release_cache()
+
+    {:noreply, %{state | hashes: Enum.take(state.hashes, 1)}}
   end
 
   def animation_frame(_sc_state, state), do: {:noreply, state}
 
   def filter_event({:value_changed, :nav, id}, _, state) do
-    state
+    state.hashes
     |> release_cache()
 
     {:ok, hash} =
@@ -117,6 +121,8 @@ defmodule ColorCycling.Component.ColorCycling do
     {:stop, state}
   end
 
+  def filter_event(:palette_request, _from, state), do: {:stop, state}
+
   def filter_event(msg, _from, state), do: {:continue, msg, state}
 
   defp image(graph) do
@@ -151,7 +157,7 @@ defmodule ColorCycling.Component.ColorCycling do
     state
     |> Map.put(:graph, graph)
     |> Map.put(:png, png)
-    |> Map.put(:hashes, [hash | state.hashes])
+    |> Map.put(:hashes, [hash | state.hashes] |> Enum.uniq())
   end
 
   defp update_image(graph, png) do
@@ -175,8 +181,8 @@ defmodule ColorCycling.Component.ColorCycling do
     {graph, hash}
   end
 
-  defp release_cache(%{hashes: hashes}) do
+  defp release_cache(hashes) do
     hashes
-    |> Enum.each(&Scenic.Cache.release(&1, delay: 25))
+    |> Enum.each(&Scenic.Cache.release(&1, dealy: 25))
   end
 end
