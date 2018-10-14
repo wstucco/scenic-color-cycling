@@ -96,12 +96,12 @@ defmodule ColorCycling.Component.ColorCycling do
 
     {:ok, hash} =
       ~s/#{String.downcase(id)}.png/
-      |> Asset.image()
+      |> Asset.image_path()
       |> load_assets()
 
     {:ok, cycles} =
       ~s/#{String.downcase(id)}.json/
-      |> Asset.image()
+      |> Asset.image_path()
       |> File.read!()
       |> Jason.decode(keys: :atoms)
 
