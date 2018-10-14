@@ -183,6 +183,6 @@ defmodule ColorCycling.Component.ColorCycling do
 
   defp release_cache(hashes) do
     hashes
-    |> Enum.each(&Scenic.Cache.release(&1, dealy: 25))
+    |> Enum.each(&Scenic.Cache.release(&1))
   end
 end
