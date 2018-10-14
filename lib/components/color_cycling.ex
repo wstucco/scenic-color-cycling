@@ -112,8 +112,8 @@ defmodule ColorCycling.Component.ColorCycling do
     {:stop, %{state | color_blending: blend?}}
   end
 
-  def filter_event(:palette_request, from, state) do
-    Palette.set_palette(from, state.png.palette)
+  def filter_event(:palette_request, from, %{png: png} = state) do
+    Palette.set_palette(from, png.palette)
     {:stop, state}
   end
 
