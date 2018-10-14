@@ -64,7 +64,4 @@ are released](https://gitlab.com/wstucco/scenic-color-cycling/blob/78735a67bf495
 
 ## Preview
 
-<video controls>
-  <source src="priv/color-cycling.webm" type="video/webm">
-  <source src="priv/color-cycling.mp4" type="video/mp4">
-</video>
+![Color Cycling App demo](priv/color-cycling.mp4)
