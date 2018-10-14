@@ -30,7 +30,41 @@ Follow the instruction and install [the `scenic_driver_glfw`](https://github.com
   
 `mix scenic.run`
 
-documentation will follow soon  
-Enoy the beast!
+## How it works
 
-![Shadow of the Beast](priv/static/screenshot.png "Shadow of the Beast")
+This is an implementantion of the color cycling technique in Elixir and [Scenic](https://github.com/boydm/scenic/)
+
+Scenic works in retained mode, it doesn't allow you to write pixels on screen directly.
+
+However, among Scenic's primitives there is the `rectangle` that can be filled with an
+image, loaded from disk.
+
+What if we change the pixels of the image in memory and draw it back on screen?  
+That's exactly what I did here.
+
+Pngs are loaded into memory, parsed with the [`parse`](https://gitlab.com/wstucco/scenic-color-cycling/blob/78735a67bf495df49ff8551fa082e7a0519a08b5/lib/png.ex#L20) function of the [`PNG`](https://gitlab.com/wstucco/scenic-color-cycling/blob/78735a67bf495df49ff8551fa082e7a0519a08b5/lib/png.ex) module, their
+palette is transformed using the [`Palette`](https://gitlab.com/wstucco/scenic-color-cycling/blob/78735a67bf495df49ff8551fa082e7a0519a08b5/lib/color-cycling/palette.ex) module, the PNG
+is re-written as a bitstring using the [`write`](https://gitlab.com/wstucco/scenic-color-cycling/blob/78735a67bf495df49ff8551fa082e7a0519a08b5/lib/png.ex#L52) function and then
+[loaded back into Scenic's cache](https://gitlab.com/wstucco/scenic-color-cycling/blob/78735a67bf495df49ff8551fa082e7a0519a08b5/lib/components/color_cycling.ex#L158).
+
+If the `color blending` checkbox is checked, [the colors between two palette states
+are linearly faded](https://gitlab.com/wstucco/scenic-color-cycling/blob/78735a67bf495df49ff8551fa082e7a0519a08b5/lib/components/color_cycling.ex#L68) one into the other.
+
+The interval between two states is 6 frames long and gives a much smoother animation,
+especially at lower frame rates (try tho move the slider to 0.25 and activate/deactivate
+the color blending to see the difference)
+
+As soon as this process is completed, the `:fill` attribute for the rectangle containing the
+image is updated and when Scenic refresh the screen, the new image appears.
+
+This process is repeated for each frame.
+
+When another animation is selected, [the images cached in memory for the previous one
+are released](https://gitlab.com/wstucco/scenic-color-cycling/blob/78735a67bf495df49ff8551fa082e7a0519a08b5/lib/components/color_cycling.ex#L83), to avoid trashing memory.
+
+## Preview
+
+<video controls>
+  <source src="priv/color-cycling.webm" type="video/webm">
+  <source src="priv/color-cycling.mp4" type="video/mp4">
+</video>
