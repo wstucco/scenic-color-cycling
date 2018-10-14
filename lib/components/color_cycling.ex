@@ -17,28 +17,16 @@ defmodule ColorCycling.Component.ColorCycling do
 
   @frames 6
 
+  @spec verify(any()) :: :invalid_data | {:ok, atom() | {atom(), any()}}
   def verify(scene) when is_atom(scene), do: {:ok, scene}
   def verify({scene, _} = data) when is_atom(scene), do: {:ok, data}
   def verify(_), do: :invalid_data
 
-  def init(data, opts, _parent) do
-    {width, height} = viewport_size(opts[:viewport])
-
+  def init(data, _opts, _parent) do
     graph =
       Graph.build()
-      |> group(
-        fn g ->
-          g
-          |> rect(
-            {width, height},
-            translate: {0, 0},
-            id: :image
-          )
-        end,
-        []
-      )
-      |> rect({640, 480}, translate: {0, 480}, fill: :black)
-      |> checkbox({"Color blending", true}, id: :color_blending, t: {374, 510})
+      |> image()
+      |> color_blending_checkbox()
       |> Palette.add_to_graph([], id: :palette, t: {374, 530})
       |> Nav.add_to_graph(data, translate: {640, 0})
       |> push_graph()
@@ -131,8 +119,30 @@ defmodule ColorCycling.Component.ColorCycling do
 
   def filter_event(msg, _from, state), do: {:continue, msg, state}
 
+  defp image(graph) do
+    graph
+    |> group(
+      fn g ->
+        g
+        |> rect(
+          {640, 480},
+          translate: {0, 0},
+          id: :image
+        )
+      end,
+      []
+    )
+  end
+
+  defp color_blending_checkbox(graph) do
+    graph
+    |> checkbox({"Color blending", true}, id: :color_blending, t: {374, 510})
+  end
+
   defp replace_image_and_palette(state, png, palette) do
-    png = PNG.replace_palette(png, palette)
+    png =
+      png
+      |> PNG.replace_palette(palette)
 
     {graph, hash} =
       state.graph
@@ -145,10 +155,12 @@ defmodule ColorCycling.Component.ColorCycling do
   end
 
   defp update_image(graph, png) do
+    png_blob = PNG.write(png)
+
     {:ok, hash} =
-      PNG.write(png)
+      png_blob
       |> Scenic.Cache.Hash.binary!(:sha)
-      |> Scenic.Cache.put(PNG.write(png))
+      |> Scenic.Cache.put(png_blob)
 
     graph =
       graph

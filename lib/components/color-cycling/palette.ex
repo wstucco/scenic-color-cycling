@@ -52,72 +52,64 @@ defmodule ColorCycling.Component.ColorCycling.Palette do
 
   defp add_palette(group, data) do
     group
-    |> background()
     |> grid()
     |> palette(data |> Enum.with_index())
   end
 
-  defp background(group) do
-    group
-    |> rect(
-      {256, 256},
-      fill: :black
-    )
+  defp grid(group) do
+    0..255 |> Enum.reduce(group, &cell/2)
   end
 
-  defp grid(group) do
-    0..255
-    |> Enum.reduce(group, fn i, group ->
-      row = rem(i, 16)
-      col = div(i, 16)
-      x = 16 * row
-      y = 16 * col
+  defp cell(i, group) do
+    row = rem(i, 16)
+    col = div(i, 16)
+    x = 16 * row
+    y = 16 * col
 
-      group
-      |> rect(
-        {15, 15},
-        fill: :black,
-        t: {x, y},
-        id: "cell_#{i}" |> String.to_atom()
-      )
-    end)
+    group
+    |> rect(
+      {15, 15},
+      fill: :black,
+      t: {x, y},
+      id: "cell_#{i}" |> String.to_atom()
+    )
   end
 
   defp palette(group, []) do
     0..255
-    |> Enum.reduce(group, fn i, group ->
-      group
-      |> Graph.modify(
-        "cell_#{i}" |> String.to_atom(),
-        &update_opts(&1, fill: :black)
-      )
-    end)
+    |> Enum.reduce(group, &modify_cell/2)
   end
 
   defp palette(group, data) do
     group =
       data
-      |> Enum.reduce(group, fn {color, i}, group ->
-        group
-        |> Graph.modify(
-          "cell_#{i}" |> String.to_atom(),
-          &update_opts(&1, fill: color)
-        )
-      end)
+      |> Enum.reduce(group, &modify_cell/2)
 
+    # in case PNG has a palette with less than 256 colors and the previous
+    # one was larger, black out all the blocks that were filled with a color
     {_, len} = Enum.max_by(data, fn {_, i} -> i end)
 
     if len < 255 do
       len..255
-      |> Enum.reduce(group, fn i, group ->
-        group
-        |> Graph.modify(
-          "cell_#{i}" |> String.to_atom(),
-          &update_opts(&1, fill: :black)
-        )
-      end)
+      |> Enum.reduce(group, &modify_cell/2)
     else
       group
     end
+  end
+
+  defp modify_cell({color, i}, group) do
+    group
+    |> Graph.modify(
+      "cell_#{i}" |> String.to_atom(),
+      &update_opts(&1, fill: color)
+    )
+  end
+
+  defp modify_cell(i, group) when is_number(i) do
+    group
+    |> Graph.modify(
+      "cell_#{i}" |> String.to_atom(),
+      &update_opts(&1, fill: :black)
+    )
   end
 end
