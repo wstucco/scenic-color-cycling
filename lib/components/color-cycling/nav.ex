@@ -94,7 +94,7 @@ defmodule ColorCycling.Component.ColorCycling.Nav do
   def handle_input({:cursor_button, {:left, :press, 0, {_x, y}}}, _context, state) do
     selected_id = item_at(y)
 
-    if selected_id != nil do
+    if selected_id != nil and selected_id != state.selected_id do
       graph = state.graph |> redraw_items(selected_id)
       send_event({:value_changed, :nav, selected_id})
       {:noreply, %{state | graph: graph, selected_id: selected_id}}
