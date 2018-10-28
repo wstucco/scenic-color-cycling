@@ -27,7 +27,7 @@ defmodule ColorCycling.Component.ColorCycling do
       Graph.build()
       |> image()
       |> color_blending_checkbox()
-      |> Palette.add_to_graph([], id: :palette, t: {374, 530})
+      |> Palette.add_to_graph(self(), id: :palette, t: {374, 530})
       |> Nav.add_to_graph(data, translate: {640, 0})
       |> push_graph()
 
@@ -124,6 +124,14 @@ defmodule ColorCycling.Component.ColorCycling do
   def filter_event(:palette_request, _from, state), do: {:stop, state}
 
   def filter_event(msg, _from, state), do: {:continue, msg, state}
+
+  def handle_call(:get_palette, _from, %{png: png} = state) do
+    {:reply, png.palette, state}
+  end
+
+  def handle_call(:get_palette, _from, state) do
+    {:reply, [], state}
+  end
 
   defp image(graph) do
     graph

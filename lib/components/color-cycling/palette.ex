@@ -4,18 +4,17 @@ defmodule ColorCycling.Component.ColorCycling.Palette do
 
   import Scenic.Primitives, only: [{:rect, 3}, {:group, 3}, {:update_opts, 2}]
 
-  def verify(palette) when is_list(palette), do: {:ok, palette}
-  def verify(scene) when is_atom(scene), do: {:ok, scene}
+  def verify(pid) when is_pid(pid), do: {:ok, pid}
   def verify({scene, _} = data) when is_atom(scene), do: {:ok, data}
   def verify(_), do: :invalid_data
 
-  def init(data, opts, _parent) do
+  def init(pid, opts, _parent) do
     graph =
       Graph.build()
-      |> group(&add_palette(&1, data), opts)
+      |> group(&add_palette(&1, []), opts)
       |> push_graph()
 
-    {:ok, %{graph: graph, palette: data, new_palette: data}}
+    {:ok, %{graph: graph, palette: [], new_palette: [], pid: pid}}
   end
 
   def set_palette(pid, palette) when is_list(palette) do
@@ -28,8 +27,6 @@ defmodule ColorCycling.Component.ColorCycling.Palette do
 
   def animation_frame(_sc_state, %{graph: graph, palette: old, new_palette: new} = state)
       when old != new do
-    send_event(:palette_request)
-
     palette =
       new
       |> Enum.with_index()
@@ -42,12 +39,14 @@ defmodule ColorCycling.Component.ColorCycling.Palette do
       |> palette(palette)
       |> push_graph()
 
-    {:noreply, %{state | graph: graph, palette: palette}}
+    new_palette = GenServer.call(state.pid, :get_palette)
+
+    {:noreply, %{state | graph: graph, palette: palette, new_palette: new_palette}}
   end
 
   def animation_frame(_sc_state, state) do
-    send_event(:palette_request)
-    {:noreply, state}
+    palette = GenServer.call(state.pid, :get_palette)
+    {:noreply, %{state | new_palette: palette}}
   end
 
   defp add_palette(group, data) do
