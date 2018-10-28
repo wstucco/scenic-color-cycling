@@ -65,4 +65,4 @@ one are released](https://gitlab.com/wstucco/scenic-color-cycling/blob/78735a67b
 
 ## Preview
 
-![Color Cycling App demo](priv/color-cycling.mp4)
+![Color Cycling App demo](https://s3-eu-west-1.amazonaws.com/massimoronca/videos/color-cycling.mp4)
